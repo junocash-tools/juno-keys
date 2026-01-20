@@ -53,10 +53,10 @@ jobs:
             rust_target: aarch64-unknown-linux-musl
             zig_target: aarch64-linux-musl
           - name: darwin-amd64
-            runs-on: macos-13
+            runs-on: macos-14
             os: darwin
             arch: amd64
-            rust_target: ""
+            rust_target: x86_64-apple-darwin
             zig_target: ""
           - name: darwin-arm64
             runs-on: macos-14
@@ -89,11 +89,16 @@ jobs:
           set -euxo pipefail
           mkdir -p dist
 
-          if [ -n "${{ matrix.rust_target }}" ]; then
+          if [ -n "${{ matrix.zig_target }}" ]; then
             cargo zigbuild --release --target "${{ matrix.rust_target }}"
             cp "target/${{ matrix.rust_target }}/release/${BIN_NAME}" "dist/${BIN_NAME}"
             file "dist/${BIN_NAME}" | grep -q "statically linked"
+          elif [ -n "${{ matrix.rust_target }}" ]; then
+            export MACOSX_DEPLOYMENT_TARGET=11.0
+            cargo build --release --target "${{ matrix.rust_target }}"
+            cp "target/${{ matrix.rust_target }}/release/${BIN_NAME}" "dist/${BIN_NAME}"
           else
+            export MACOSX_DEPLOYMENT_TARGET=11.0
             cargo build --release
             cp "target/release/${BIN_NAME}" "dist/${BIN_NAME}"
           fi
